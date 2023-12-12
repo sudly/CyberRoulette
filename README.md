@@ -9,6 +9,7 @@ The game can only run on **Linux** now.The following steps show that how to inst
 ```
 git clone https://github.com/sudly/CyberRoulette.git
 cd CyberRoulette
+chmod +x bin/*
 bin/install
 ```
 
