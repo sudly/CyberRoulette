@@ -1,0 +1,75 @@
+#! /bin/bash
+#path
+scriptDir=$(cd $(dirname "$0") && pwd)
+
+#import
+source $scriptDir/commonFunctions
+
+#functions
+stopf(){
+  name=$1
+  rm -rf /tmp/cr-process-${name}.runtime
+}
+
+stopAll(){
+  for item in $(ls /tmp/cr-process-*.runtime 2>&1)
+  do
+    rm -rf $item
+  done
+}
+
+helpf(){
+  path="$0"
+  echo
+  echo "Usage:"
+  echo "$path -n <name>"
+  echo "$path -a"
+  echo
+  echo "illustration:"
+  echo "-n <name>    specify the name of the instance that will be stopped"
+  echo "-a           stop all running instances"
+  echo
+}
+
+#main
+#handle params
+hflag=1
+aflag=1
+name=""
+while getopts ":n:ha" opt; do
+  case $opt in
+    h)
+      hflag=0
+      ;;
+    a)
+      aflag=0
+      ;;
+    n)
+      name="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG"
+      ;;
+  esac
+done
+
+#help mode
+if [ $hflag -eq 0 ]; then
+  helpf
+  exit
+fi
+
+#stop all processes
+if [ $aflag -eq 0 ]; then
+  stopAll
+  exit
+fi
+
+#print the help page if the name is null
+if [ -z $name ];then
+  helpf
+  exit
+fi
+
+#stop the process
+stopf $name

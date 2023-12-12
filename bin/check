@@ -1,0 +1,102 @@
+#! /bin/bash
+#path
+scriptDir=$(cd $(dirname "$0") && pwd)
+
+#import
+source $scriptDir/commonFunctions
+
+#functions
+checkf(){
+  name=$1
+  runtimeName="cr-process-${name}.runtime"
+  containerName="cr-container-${name}"
+  res=1
+  #process
+  process="inactive"
+  flock -n /tmp/$runtimeName -c true
+  if [ $? -ne 0 ];then
+    process="active"
+  fi
+  #container
+  #container=`sudo docker inspect -f '{{.State.Status}}' $containerName 2>&1`
+  #if [ $? -ne 0 ];then
+  #  container="unknown"
+  #fi
+  #port
+  port=`sudo docker inspect --format='{{range $p, $conf := .NetworkSettings.Ports}} {{$p}} {{end}}' $containerName 2>&1`
+  if [ $? -ne 0 ];then
+    port="unknown"
+  else
+    res=0
+  fi 
+  #display
+  #echo "name:${name},process:${process},container:${container},port:${port}"
+  echo "name:${name},process:${process},port:${port}"
+  return $res
+}
+
+checkAll(){
+  for item in $(ls /tmp/cr-process-*.runtime 2>&1 );do
+    name=$(awk -F'-' '{print $3}' <<< "$item" | cut -d'.' -f1)
+    res=`checkf $name`
+    if [ $? -eq 0 ];then
+      echo $res
+    fi
+  done
+}
+
+helpf(){
+  path="$0"
+  echo 
+  echo "Usage:"
+  echo "$path -n <name>"
+  echo "$path -a"
+  echo
+  echo "illustration:"
+  echo "-n <name>    specify the name of the instance that will be checked"
+  echo "-a           check statuses of all running instances"
+  echo
+}
+
+#main
+#handle params
+hflag=1
+aflag=1
+name=""
+while getopts ":n:ha" opt; do
+  case $opt in
+    h)
+      hflag=0
+      ;;
+    a)
+      aflag=0
+      ;;
+    n)
+      name="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG"
+      ;;
+  esac
+done
+
+#help mode
+if [ $hflag -eq 0 ]; then
+  helpf
+  exit
+fi
+
+#check all processes
+if [ $aflag -eq 0 ];then
+  checkAll
+  exit
+fi
+
+#print the help page if the name is null
+if [ -z $name ];then
+  helpf
+  exit
+fi
+
+#check the process
+checkf $name

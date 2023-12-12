@@ -1,0 +1,23 @@
+#! /bin/bash
+
+mainloop(){
+  while true
+  do
+    status1=`kill -0 $1`
+    res1=$?
+    status2=`kill -0 $2`
+    res2=$?
+    if [ $res1 -eq 1 ];then
+      exit 1
+    elif [ $res2 -eq 1 ];then
+      exit 1
+    fi
+  done
+}
+
+port=$1
+shellinaboxd -t -p $port --css=/style/white-on-black.css &
+pid1=$!
+flock /runtime -c true &
+pid2=$!
+mainloop $pid1 $pid2

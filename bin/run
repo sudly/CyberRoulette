@@ -1,0 +1,134 @@
+#! /bin/bash
+#path
+scriptDir=$(cd $(dirname "$0") && pwd)
+
+#import
+source $scriptDir/commonFunctions
+
+#functions
+monitorContainer(){
+  #monitor the container
+  #params
+  name=$1
+  port=$2
+  containerName="cr-container-$name"
+  runtimeName="cr-process-${name}.runtime"
+  #do nothing if the container is ok
+  status=`sudo docker ps --format {{.Names}} | grep -w "$containerName"`
+  if [ -n "$status" ];then
+    return 0
+  fi
+  #reset the container when the container isn't ok
+  log "the status of the container cr-container-${name} is abnormal"
+  log "start restoring cr-container-${name}"
+  sudo docker rm -f $containerName > /dev/null 2>&1
+  sudo docker run \
+  -dt \
+  --name $containerName \
+  -p $port:$port \
+  --rm \
+  -v /tmp/$runtimeName:/runtime \
+  cr-image:latest \
+  bash -c "/init/cyberRouletteInit $port"
+  #handling results
+  res=$?
+  if [ $res -eq 0 ];then
+    log "finish restoring cr-container-${name}"
+  else
+    log "interrupt restoring cr-container-${name}"
+  fi
+  return $res
+}
+
+runProcess(){
+  #read params
+  name=$1
+  port=$2
+  runtimeName="cr-process-${name}.runtime"
+  #obtain the lock
+  (
+    flock -xn 200
+    #exit if the program failed to obtain the lock
+    if [ $? -ne 0 ];then
+      log "the process cr-process-${name} is already running"
+      exit
+    fi
+    #remove the old container
+    sudo docker rm -f "cr-container-${name}" > /dev/null 2>&1
+    #loop
+    while true
+    do
+      #check the lock
+      if [ -e /tmp/$runtimeName ];then
+        true
+      else
+        log "stop running cr-process-${name}"
+        break 
+      fi
+      #monitor the container
+      monitorContainer $name $port
+      if [ $? -ne 0 ];then
+        log "failed to restore the container cr-container-${name}"
+        break
+      fi
+      #delay
+      sleep 1
+    done 
+  )200>/tmp/$runtimeName
+}
+
+helpf(){
+  path="$0"
+  echo
+  echo "Usage:"
+  echo "$0 -n <name> -p <port>"
+  echo
+  echo "illustration:"
+  echo "-n <name>    specify the name of the instance"
+  echo "-p <port>    specify the port that is occupied by the instance"
+  echo
+}
+
+#main
+#handle params
+hflag=1
+dflag=1
+name=""
+port=""
+while getopts ":n:p:hd" opt; do
+  case $opt in
+    h)
+      hflag=0
+      ;;
+    d)
+      dflag=0
+      ;;
+    n)
+      name="$OPTARG"
+      ;;
+    p)
+      port="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG"
+      ;;
+  esac
+done
+#help mode
+if [ $hflag -eq 0 ];then
+  helpf
+  exit
+fi
+
+if [ -z $name ] || [ -z $port ] ;then
+  helpf
+  exit
+fi
+
+#start the process
+sudo true
+if [ $dflag -eq 0 ];then
+  runProcess $name $port >> $scriptDir/../logs/info.log &
+else
+  runProcess $name $port
+fi

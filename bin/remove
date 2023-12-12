@@ -1,0 +1,48 @@
+#! /bin/bash
+
+#path
+scriptDir=$(cd $(dirname "$0") && pwd)
+
+#import
+source $scriptDir/commonFunctions
+
+#functions
+ask(){
+  echo "are you sure you want to remove all components (y/n)"
+  read option
+  if [ -z $option ];then
+    echo "invalid option"
+    exit
+  elif [ $option == "y" ];then
+    true
+  elif [ $option == "n" ];then
+    exit
+  else
+    echo 'invalid option'
+    exit
+  fi
+}
+removeAll(){
+  #stop processes
+  log 'stopping processes'
+  for item in $(ls /tmp/cr-process-*.runtime 2>&1)
+  do
+    rm -rf $item
+  done
+  #remove containers
+  log 'removing containers'
+  containers=$(sudo docker ps -a --format "{{.ID}} {{.Image}}" | grep "cr-image" | awk '{print $1}')
+  for container in $containers
+  do
+    sudo docker rm -f "$container"
+  done
+  #remove the image
+  log 'removing the image'
+  sudo docker rmi cr-image:latest
+}
+
+#main
+#confirm
+ask
+#remove
+removeAll

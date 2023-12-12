@@ -1,0 +1,10 @@
+#! /bin/bash
+
+#path
+scriptDir=$(cd $(dirname "$0") && pwd)
+
+#functions
+log(){
+  date +"%Y-%m-%d %H:%M:%S"
+  echo $1
+}
