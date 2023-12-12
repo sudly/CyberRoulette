@@ -1,4 +1,4 @@
-# cyber roulette
+# Cyber Roulette
 ## introduce
 Cyber Roulette is a game that has a playing method which is similar to Russian Roulette. In the game,you will play the role of an operations engineer.Once the server you maintaining was infected by a virus that was named "roulette". The virus stopped all available web services and simulated a revolver loaded with several bullets. Discharging the simulated revolver could clear the virus or destroy the whole server.After multiple methods were proven to be unable to clear the virus,you decided to log in the server to discharge the simulated revolver...
 ## installation
@@ -7,12 +7,12 @@ The game can only run on **Linux** now.The following steps show that how to inst
 2. run following commands
 
 ```
-git clone ...
+git clone https://github.com/sudly/CyberRoulette.git
 cd cyberRoulette
 bin/install
 ```
 
-## playing method
+## Tutorial
 The following steps show that how to play this game.
 1. Enter the root directory of the project(where the file README.md is located).**Unless otherwise specified,switch to the root directory before running the following commands.**
 2. Run the command `bin/run -n <name> -p <port>` to construct a game instance.
