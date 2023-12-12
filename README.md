@@ -12,7 +12,7 @@ cd cyberRoulette
 bin/install
 ```
 
-## Tutorial
+## tutorial
 The following steps show that how to play this game.
 1. Enter the root directory of the project(where the file README.md is located).**Unless otherwise specified,switch to the root directory before running the following commands.**
 2. Run the command `bin/run -n <name> -p <port>` to construct a game instance.
